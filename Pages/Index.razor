@@ -1,0 +1,139 @@
+﻿@page "/"
+@page "/index"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager navigationManager
+@inject IJSRuntime JsRuntime
+
+<main>
+    <section style="position:absolute; z-index: 1000">
+        @if (modalShow)
+        {
+            <Modal EventCallBack="ModalClose" Title="@title" ModalColor="red"></Modal>
+            modalShow = false;
+        }
+    </section>
+
+    <section style="position:absolute; z-index: 1000">
+        @if (modalMessage)
+        {
+            <ModalCopyToClipboard ModalColor="yellow" Title="@ModalMessage"></ModalCopyToClipboard>
+           
+        }
+    </section>
+    <div class="main-container">
+        <div class="card @ClassFlip">
+            <div class="card-form">
+                <span class="title">Unitarização &#10159 Revalidar</span>
+                <EditForm Model="_expiration" OnValidSubmit="FormSubmit">
+                    <label for="now">
+                        <span class="form-span">Data Atual</span>
+                        <InputDate @bind-Value="_expiration.DateNow" class="input-data" ParsingErrorMessage="Data Incorreta"></InputDate>
+                        <ValidationMessage For="()=> _expiration.DateNow" />
+                    </label>
+                    <label for="date">
+                        <span class="form-span">Data de Validade</span>
+                        <InputDate @bind-Value="_expiration.ExpirationDate" class="input-data" ParsingErrorMessage="Data de Validade Incorreta"></InputDate>
+                        <ValidationMessage For="()=> _expiration.ExpirationDate" />
+                    </label>
+                    <input class="button" type="submit" value="Calcular Nova Validade" />
+                    <DataAnnotationsValidator />
+                </EditForm>
+            </div>
+
+            <div class="card-result">
+                <section class="title">
+                    <h1>Resultados</h1>
+                </section>
+                <section class="data">
+                    <span>Data Atual: @_expiration.DateNow.ToShortDateString()</span>
+                    <span>Validade: @_expiration.ExpirationDate.ToShortDateString()</span>
+                    <span>Validade reduzida pelo fator: @DateDecreaseFactor.ToShortDateString()</span>
+                    <span>Validade reduzida (máximo de dias): @DateExpirationDays.ToShortDateString()</span>
+                    <div class="validity-copy">
+                        <span>Validade Final: <strong style="color: yellow; margin-left: 5px; "> @DateExpirationFinal.ToShortDateString() </strong></span>
+                        <button id="copy" @onclick="CopyToClipboard">Copiar</button>
+                    </div>
+
+                    <button id="ok" @onclick="ReturnToIndex">Ok</button>
+                </section>
+            </div>
+        </div>
+    </div>
+</main>
+
+@code {
+    private string ClassFlip = string.Empty;
+    private Expiration _expiration = new();
+    private DateTime DateDecreaseFactor, DateExpirationDays, DateExpirationFinal;
+    private bool modalShow = false;
+    private bool modalMessage = false;
+    private string title = "Data de validade vencida!";
+    private string ModalMessage = "Copiado para a área de transferência.";
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var json = await localStorage.GetItemAsync<string>("expirationSettings");
+        if (json != null)
+        {
+            _expiration = System.Text.Json.JsonSerializer.Deserialize<Expiration>(json);
+            _expiration.DateNow = DateTime.Now;
+        }
+        else
+        {
+            navigationManager.NavigateTo("settings");
+        }
+    }
+
+    private void FormSubmit()
+    {
+        if (_expiration.DateNow.CompareTo(_expiration.ExpirationDate) >= 1)
+        {
+            modalShow = true;
+            return;
+        }
+        ClassFlip = "flip";
+        CalculateDateExpiration(_expiration);
+    }
+
+    private void CalculateDateExpiration(Expiration expiration)
+    {
+        var diferenceDays = Math.Ceiling((expiration.ExpirationDate - expiration.DateNow).TotalDays);
+        var dateDecreaseFactor = Math.Ceiling(diferenceDays * expiration.DecreaseFactor / 100);
+        DateDecreaseFactor = expiration.DateNow.AddDays(dateDecreaseFactor);
+
+        DateExpirationDays = _expiration.DateNow.AddDays(_expiration.ExpirationDays);
+
+        if (DateExpirationDays.CompareTo(DateDecreaseFactor) <= 0 && DateExpirationDays.CompareTo(_expiration.DateNow) >= 0)
+        {
+            DateExpirationFinal = DateExpirationDays;
+        }
+        else
+        {
+            DateExpirationFinal = DateDecreaseFactor;
+        }
+    }
+
+    private void ModalClose()
+    {
+        modalShow = false;
+        StateHasChanged();
+    }
+
+    private void ReturnToIndex()
+    {
+        ClassFlip = string.Empty;
+    }
+
+    private async Task CopyToClipboard()
+    {
+        await JsRuntime.InvokeVoidAsync("clipboardCopy", DateExpirationFinal.ToShortDateString());
+        modalMessage = true;
+        StateHasChanged();
+
+        await Task.Delay(2000);
+        modalMessage = false;
+    }
+}
+

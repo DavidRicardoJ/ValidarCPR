@@ -1,0 +1,90 @@
+﻿
+<div class="@modalContainer">
+    <div class="modal">
+       
+        <h1 class="subtitulo">@Title</h1>
+       
+    </div>
+</div>
+
+
+@code {
+   
+    private string modalContainer = "modal-container mostrar";
+
+
+    [Parameter]
+    public string Title { get; set; }
+   
+
+    [Parameter]
+    public string ModalColor { get; set; } = "#988b7a";
+
+   
+}
+
+@*** CSS STYLE ***@
+<style>
+    body {
+        background: rgba(125, 95, 255,1.0);
+    }
+
+    .main-container{
+        display: none;
+    }
+
+    ﻿.modal-container {
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, .5);
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        z-index: 2000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-container.mostrar {
+        display: flex;
+    }
+
+    .modal {
+        background: white;
+        padding: 40px !important;
+        border: 10px solid @ModalColor;
+        box-shadow: 0 0 0 10px white;
+        position: relative;
+        width: contain;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    @@keyframes modal {
+        from {
+            opacity: 0;
+            transform: translate3d(0, -60px, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .mostrar .modal {
+        animation: modal .3s;
+    }
+    .subtitulo {
+        margin-top: -5px;
+    }
+
+
+    @@media screen and (max-width: 767px) {
+        .subtitulo {
+            font-size: 1.2em;
+        }        
+    }
+</style>

@@ -1,0 +1,77 @@
+﻿@page "/settings"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager navigationManager
+
+<main>
+    <section style="position:absolute; z-index: 1000">
+        @if (modalShow)
+        {
+            <Modal EventCallBack="NavigateToPageIndex" Title="@title"></Modal>
+            modalShow = false;
+        }
+    </section>
+  
+    <div class="main-container">      
+        <div class="card-form">
+
+            <span class="title">Configurações</span>
+            <EditForm Model="expiration" OnValidSubmit="FormSubmit">
+                <label for="fator">
+                    <span class="form-span">Fator de Redução (%)</span>
+                    <input class="input-data" type="number" id="fator" name="fator" @bind-value="expiration.DecreaseFactor" />
+                    <ValidationMessage For="()=> expiration.DecreaseFactor"/>
+                </label>
+                <label for="max-days">
+                    <span class="form-span">Validade Máxima (dias)</span>
+                    <input class="input-data" type="number" id="max-days" name="max-days" @bind-value="expiration.ExpirationDays" />
+                    <ValidationMessage For="()=> expiration.ExpirationDays" />
+                </label>
+                <input class="button" type="submit" value="Salvar" />
+
+                <DataAnnotationsValidator />               
+            </EditForm>
+
+        </div>
+    </div>
+
+</main>
+
+@code{
+    private bool modalShow = false;
+    private Expiration expiration = new();
+    private string title = "Salvo com Sucesso!";
+
+    private async Task FormSubmit()
+    {
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(expiration);
+            await localStorage.SetItemAsync("expirationSettings", json);
+            modalShow = true;
+        }
+        catch (Exception)
+        {
+
+            title = "Erro ao Salvar";
+            modalShow = true;
+        }
+
+
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var json = await localStorage.GetItemAsync<string>("expirationSettings");
+
+        if (json != null)
+        {
+            expiration = System.Text.Json.JsonSerializer.Deserialize<Expiration>(json);
+        }
+    }
+
+    private void NavigateToPageIndex()
+    {
+        navigationManager.NavigateTo("index");
+    }
+}

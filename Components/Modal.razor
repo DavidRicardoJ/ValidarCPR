@@ -1,0 +1,128 @@
+﻿
+<div class="@modalContainer">
+    <div class="modal">
+        <button class="@fecharModal" @onclick="Fechar">x</button>
+        <h1 class="subtitulo">@Title</h1>
+        <form>
+            <input type="button" class="button-modal" value="Ok!" @onclick="Fechar">
+        </form>
+    </div>
+</div>
+
+
+@code {
+    private string fecharModal = "fechar";
+    private string modalContainer = "modal-container mostrar";
+
+
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public EventCallback EventCallBack { get; set; }
+
+    [Parameter]
+    public string ModalColor { get; set; } = "#988b7a";
+
+    private async void Fechar()
+    {
+        modalContainer = "modal-container";
+        await EventCallBack.InvokeAsync();
+    }
+}
+
+@*** CSS STYLE ***@
+<style>
+    body {
+        background: rgba(125, 95, 255,1.0);
+    }
+
+    .main-container{
+        display: none;
+    }
+
+    ﻿.modal-container {
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, .5);
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        z-index: 2000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-container.mostrar {
+        display: flex;
+    }
+
+    .modal {
+        background: white;
+        padding: 40px !important;
+        border: 10px solid @ModalColor;
+        box-shadow: 0 0 0 10px white;
+        position: relative;
+        width: contain;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    @@keyframes modal {
+        from {
+            opacity: 0;
+            transform: translate3d(0, -60px, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .mostrar .modal {
+        animation: modal .3s;
+    }
+
+    .fechar {
+        position: absolute;
+        font-size: 1.2em;
+        top: -30px;
+        right: -30px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 4px solid white;
+        background: #988b7a;
+        color: white;
+        font-family: "PT Mono", monospace;
+        cursor: pointer;
+        box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .3);
+    }
+
+    .button-modal {
+        border: 1px solid #988b7a;
+        color: black;
+        background-color: antiquewhite;
+        padding: 20px 40px;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .subtitulo {
+        margin-top: -5px;
+    }
+
+
+    @@media screen and (max-width: 767px) {
+        .subtitulo {
+            font-size: 1.2em;
+        }
+
+        .button-modal {
+            font-size: 1.2em;
+        }
+    }
+</style>
