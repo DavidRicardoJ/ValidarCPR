@@ -17,7 +17,7 @@
         @if (modalMessage)
         {
             <ModalCopyToClipboard ModalColor="yellow" Title="@ModalMessage"></ModalCopyToClipboard>
-           
+
         }
     </section>
     <div class="main-container">
@@ -47,10 +47,10 @@
                 <section class="data">
                     <span>Data Atual: @_expiration.DateNow.ToShortDateString()</span>
                     <span>Validade: @_expiration.ExpirationDate.ToShortDateString()</span>
-                    <span>Validade reduzida pelo fator: @DateDecreaseFactor.ToShortDateString()</span>
-                    <span>Validade reduzida (máximo de dias): @DateExpirationDays.ToShortDateString()</span>
+                    <span>Redução pelo fator (@_expiration.DecreaseFactor%): @DateDecreaseFactor.ToShortDateString()</span>
+                    <span>Redução (Máximo @_expiration.ExpirationDays dias): @DateExpirationDays.ToShortDateString()</span>
                     <div class="validity-copy">
-                        <span>Validade Final: <strong style="color: yellow; margin-left: 5px; "> @DateExpirationFinal.ToShortDateString() </strong></span>
+                        <span id="final-result">Validade Final: <strong> @DateExpirationFinal.ToShortDateString()</strong></span>
                         <button id="copy" @onclick="CopyToClipboard">Copiar</button>
                     </div>
 
@@ -70,15 +70,15 @@
     private string title = "Data de validade vencida!";
     private string ModalMessage = "Copiado para a área de transferência.";
 
-
-
     protected override async Task OnInitializedAsync()
     {
         var json = await localStorage.GetItemAsync<string>("expirationSettings");
         if (json != null)
         {
             _expiration = System.Text.Json.JsonSerializer.Deserialize<Expiration>(json);
+            _expiration.ExpirationDate = DateTime.Now;
             _expiration.DateNow = DateTime.Now;
+
         }
         else
         {
@@ -131,7 +131,6 @@
         await JsRuntime.InvokeVoidAsync("clipboardCopy", DateExpirationFinal.ToShortDateString());
         modalMessage = true;
         StateHasChanged();
-
         await Task.Delay(2000);
         modalMessage = false;
     }
